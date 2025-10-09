@@ -1,0 +1,100 @@
+services:
+  frontend:
+    image: {{ frontend_image }}
+    restart: unless-stopped
+    {% if use_reverse_proxy %}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.frontend.rule=Host(`{{ selected_host }}`)"
+      - "traefik.http.services.frontend.loadbalancer.server.port=80"
+    {% else %}
+    ports:
+      - "{{ frontend_ports }}"
+    {% endif %}
+    environment:
+      - HOST={{ selected_host }}
+    depends_on:
+      - backend
+
+  backend:
+    image: {{ backend_image }}
+    restart: unless-stopped
+    {% if use_reverse_proxy %}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.backend.rule=Host(`{{ selected_host }}`)"
+      - "traefik.http.services.backend.loadbalancer.server.port=80"
+    {% else %}
+    ports:
+      - "{{ backend_ports }}"
+    {% endif %}
+    environment:
+      - HOST={{ selected_host }}
+      {% if db_service %}
+      - DB_HOST={{ db_service }}
+      - DB_PORT={{ db_port }}
+      - DB_USER={{ db_user }}
+      - DB_PASSWORD={{ db_password }}
+      - DB_NAME={{ db_name }}
+      {% endif %}
+      {% if uses_redis %}
+      - REDIS_HOST=redis
+      {% endif %}
+    depends_on:
+      - frontend
+      {% if db_service %}- {{ db_service }}{% endif %}
+      {% if uses_redis %}- redis{% endif %}
+
+  {% if db_service %}
+  {{ db_service }}:
+    image: {{ db_image }}
+    restart: unless-stopped
+    {% if db_type == "postgres" %}
+    environment:
+      - POSTGRES_USER={{ db_user }}
+      - POSTGRES_PASSWORD={{ db_password }}
+      - POSTGRES_DB={{ db_name }}
+    volumes:
+      - {{ db_service }}_data:/var/lib/postgresql/data
+    {% elif db_type == "mysql" %}
+    environment:
+      - MYSQL_ROOT_PASSWORD={{ db_password }}
+      - MYSQL_DATABASE={{ db_name }}
+      - MYSQL_USER={{ db_user }}
+      - MYSQL_PASSWORD={{ db_password }}
+    volumes:
+      - {{ db_service }}_data:/var/lib/mysql
+    {% elif db_type == "mongo" %}
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME={{ db_user }}
+      - MONGO_INITDB_ROOT_PASSWORD={{ db_password }}
+      - MONGO_INITDB_DATABASE={{ db_name }}
+    volumes:
+      - {{ db_service }}_data:/data/db
+    {% endif %}
+  {% endif %}
+
+  {% if uses_redis %}
+  redis:
+    image: redis:7
+    restart: unless-stopped
+    volumes:
+      - redis_data:/data
+  {% endif %}
+
+  {% if use_reverse_proxy %}
+  traefik:
+    image: traefik:v2.10
+    restart: unless-stopped
+    command:
+      - "--providers.docker=true"
+      - "--entrypoints.web.address=:80"
+    ports:
+      - "80:80"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+  {% endif %}
+
+volumes:
+  {% if db_service %}{{ db_service }}_data:{% endif %}
+  {% if uses_redis %}redis_data:{% endif %}
