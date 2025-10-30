@@ -1,12 +1,14 @@
 import json
 import subprocess
 from pathlib import Path
-from core.models import Status
 from typing import Dict
 
+from core.models import Status
 
 class DockerRunner:
-    def get_container_statuses(self, path: Path) -> Dict[str, Status]:
+
+    @staticmethod
+    def get_container_statuses(path: Path) -> Dict[str, Status]:
         statuses: Dict[str, Status] = {}
         try:
             result = subprocess.run(
@@ -52,7 +54,8 @@ class DockerRunner:
             return Status.RUNNING
         return Status.STOPPED
 
-    def compose_up(self, path: Path):
+    @staticmethod
+    def compose_up(path: Path):
         try:
             result = subprocess.run(
                 ["docker", "compose", "up", "-d"],
@@ -69,7 +72,8 @@ class DockerRunner:
         except Exception as e:
             raise Exception(f"Docker up failed: {e}")
 
-    def compose_down(self, path: Path):
+    @staticmethod
+    def compose_down(path: Path):
         try:
             result = subprocess.run(
                 ["docker", "compose", "down"],

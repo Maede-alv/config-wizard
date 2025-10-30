@@ -1,6 +1,6 @@
 from enum import Enum
 from pathlib import Path
-from typing import List, Dict, Tuple
+from typing import List, Dict
 
 
 class Status(Enum):
@@ -36,4 +36,3 @@ class Project:
         self.containers = containers or []
         self.status = Status.NOT_CREATED
         self.container_statuses: Dict[str, Status] = {}
-        self.extra_hosts: List[Tuple[str, str]] = []  # New: (ip, host) list
