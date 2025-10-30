@@ -48,17 +48,3 @@ A modern, user-friendly GUI application for managing Docker Compose projects. Bu
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## Support
-
-If you encounter any issues or have questions:
-
-1. Check the project documentation
-2. Search existing issues
-3. Create a new issue with detailed information
-
-## Acknowledgments
-
-- Built with [Flet](https://flet.dev/) for the modern GUI
-- Uses Docker Compose for container orchestration
-- CI/CD powered by GitHub Actions
